@@ -47,7 +47,7 @@ It uses your ChatGPT subscription, so there are no per-minute API costs.
 | Part | Notes |
 |---|---|
 | Seeed **reSpeaker XVF3800 4-mic array with XIAO ESP32-S3** | XVF3800 runs the I2S 16 kHz firmware |
-| Seeed **Mono Enclosed Speaker 4 Ω 5 W** | on the board's speaker connector (or a powered speaker on the 3.5 mm jack) |
+| Seeed [**Mono Enclosed Speaker 4R 5W**](https://www.seeedstudio.com/Mono-Enclosed-Speaker-4R-5W-p-5931.html) (SKU 114993346) | 49.6 × 44.6 × 22 mm box with two screw tabs; on the board's JST speaker connector. The enclosure is designed for exactly this speaker (a powered speaker on the 3.5 mm jack also works) |
 | USB-C power supply | |
 | Optional: HomePod / AirPlay 2 speaker | |
 | An always-on computer at home | runs the relay (macOS scripts included; anything that runs Python + WireGuard works) |

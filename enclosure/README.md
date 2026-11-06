@@ -3,7 +3,8 @@
 ![Enclosure, front](images/front_grille.png)
 
 A round puck, Ø112.8 × 63.9 mm (plus rubber feet), for the reSpeaker XVF3800 + XIAO ESP32-S3 and
-Seeed's *Mono Enclosed Speaker 4R 5W*. It is a parametric CadQuery model: change the numbers and
+Seeed's [*Mono Enclosed Speaker 4R 5W*](https://www.seeedstudio.com/Mono-Enclosed-Speaker-4R-5W-p-5931.html)
+(SKU 114993346; dimensions and tab holes taken from Seeed's datasheet drawing). It is a parametric CadQuery model: change the numbers and
 regenerate. STEP files (for CAD) and STL files (for printing) are generated, not committed.
 
 | Exploded | Section |
