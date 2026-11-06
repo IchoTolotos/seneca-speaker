@@ -1,0 +1,7 @@
+## Only needed on ESP-IDF >= 6.0, where cJSON left the core and lives in the
+## component registry. On IDF 5.x the bundled `json` component is used instead.
+dependencies:
+  espressif/cjson:
+    version: "^1.7.18"
+    rules:
+      - if: "idf_version >=6.0"

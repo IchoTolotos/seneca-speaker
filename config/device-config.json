@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "chatgpt": {
+    "base_url": "https://chatgpt.com",
+    "client_version": "prod-e8f67765f24e1c6773b4b61b4310d5ff9297439a",
+    "client_build": "8338682",
+    "web_client_id": "app_X8zY6vW2pQ9tR3dE7nK1jL5gH",
+    "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15",
+    "session_overrides": {}
+  },
+  "policy": {
+    "idle_close_s": 300,
+    "rotate_before_cap_s": 60,
+    "daily_refresh_s": 86400,
+    "token_refresh_margin_s": 86400
+  }
+}

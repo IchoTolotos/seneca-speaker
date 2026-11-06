@@ -1,0 +1,19 @@
+## IDF Component Manager manifest. Everything comes from components.espressif.com;
+## esp_webrtc (the convenience layer) is not published, so we drive esp_peer directly.
+dependencies:
+  idf:
+    version: '>=5.4'
+  espressif/esp_peer:          # WebRTC PeerConnection (ICE/DTLS-SRTP/SCTP), prebuilt core
+    version: ~1.5
+  espressif/esp_capture:       # mic -> Opus encoder pipeline (audio dev source, no AEC)
+    version: ~1.1
+  tempotian/av_render:         # Opus decoder -> I2S render with jitter FIFO
+    version: ~1.2
+  espressif/esp_audio_codec:   # Opus encoder/decoder (only Opus is registered)
+    version: ~2.6
+  espressif/esp_codec_dev:     # wraps our I2S channels as codec devices
+    version: ^2.0.0-beta5
+  esphome/wireguard: ^0.4.8
+  espressif/esp-tflite-micro: ==1.3.3~1
+  esphome/esp-micro-speech-features: ==1.2.3
+  espressif/mdns: ^1.4           # AirPlay speaker discovery (airplay_tx)

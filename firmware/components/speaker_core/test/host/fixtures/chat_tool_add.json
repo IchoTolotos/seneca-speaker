@@ -1,0 +1,1 @@
+{"type":"data_message","data":"{\"type\":\"chat_message_delta\",\"payload\":{\"type\":\"chat_message_delta\",\"delta\":{\"c\":2,\"p\":\"\",\"o\":\"add\",\"v\":{\"message\":{\"id\":\"msg-tool-1\",\"author\":{\"role\":\"tool\",\"name\":\"web.run\"},\"content\":{\"content_type\":\"text\",\"parts\":[\"\"]},\"status\":\"in_progress\"}}}}}"}

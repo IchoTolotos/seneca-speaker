@@ -1,0 +1,1 @@
+{"type":"data_message","data":"{\"type\":\"usage_update\",\"payload\":{\"audio_s\":1000.0,\"session_s\":45.5,\"limits\":{\"audio\":{\"remaining_seconds\":1000.0},\"session\":{\"remaining_seconds\":45.5}},\"instructions\":{\"hang_up\":false,\"reconnect\":{\"delay_s\":2}}}}"}

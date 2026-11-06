@@ -1,0 +1,30 @@
+.DS_Store
+__pycache__/
+*.log
+logs/
+node_modules/
+
+# firmware: sdkconfig holds Wi-Fi/WireGuard credentials
+firmware/build/
+firmware/managed_components/
+firmware/sdkconfig
+firmware/sdkconfig.old
+
+# signaling prototype secrets
+signaling/.dev.vars
+signaling/.wrangler/
+
+# tools
+tools/fake-speaker/.venv/
+tools/fake-speaker/captures/
+
+# wake-word training data, features, models and venvs (large, regenerable)
+wakeword/work/
+wakeword/fast/*.log
+
+# generated enclosure exports (STEP/STL/renders/viewer)
+enclosure/out/
+
+# local diagnostics and personal setup notes
+/work/
+/private/

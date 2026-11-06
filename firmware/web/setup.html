@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Seneca speaker</title>
+<style>
+:root{color-scheme:light dark;--b:#8884;--a:#0a7;--e:#d33}
+*{box-sizing:border-box}
+body{font:16px/1.4 -apple-system,system-ui,sans-serif;margin:0 auto;max-width:34rem;padding:1rem}
+h1{font-size:1.3rem;margin:.2rem 0 1rem}h2{font-size:1.05rem;margin:0 0 .6rem}
+section{border:1px solid var(--b);border-radius:10px;padding:1rem;margin-bottom:1rem}
+label{display:block;margin:.5rem 0 .2rem;font-weight:600;font-size:.9rem}
+input,select,textarea,button{font:inherit;width:100%;padding:.55rem;border:1px solid var(--b);border-radius:8px;background:transparent;color:inherit}
+input[type=checkbox]{width:auto;margin-right:.4rem}input[type=range]{padding:0;border:0}details{margin-top:.6rem}summary{cursor:pointer;font-weight:600}
+textarea{font:12px/1.3 ui-monospace,monospace;resize:vertical}
+button{background:var(--a);color:#fff;border:0;font-weight:600;margin-top:.8rem;cursor:pointer}
+button.g{background:transparent;color:inherit;border:1px solid var(--b)}
+button:disabled{opacity:.5}
+.row{display:flex;gap:.5rem}.row>*{flex:1}
+.hint{font-size:.85rem;opacity:.75}
+dl{display:grid;grid-template-columns:auto 1fr;gap:.25rem .8rem;margin:0;font-size:.9rem}dt{opacity:.7}dd{margin:0;word-break:break-all}
+.ok{color:var(--a)}.bad{color:var(--e)}
+#msg{min-height:1.4em;font-weight:600}
+ol{padding-left:1.2rem;margin:.3rem 0}code{font-size:.85em}
+.meter{position:relative;height:18px;border:1px solid var(--b);border-radius:6px;overflow:hidden;margin:.2rem 0 .1rem}
+.meter .fill{position:absolute;left:0;top:0;bottom:0;background:var(--a);transition:width .1s}
+.meter .mk{position:absolute;top:0;bottom:0;width:2px}
+.meter .pk{background:#fa0}.meter .nf{background:#888}.meter .th{background:var(--e)}
+.mv{font:12px ui-monospace,monospace;opacity:.8}
+canvas{width:100%;height:90px;border:1px solid var(--b);border-radius:6px}
+#ev{font:12px ui-monospace,monospace;margin:.3rem 0 0;padding-left:1rem}
+audio{width:100%;margin-top:.6rem}
+</style>
+</head><body><h1>Seneca speaker</h1>
+<section><h2>Your speaker</h2><dl id="st"><dt>Status</dt><dd>Connecting…</dd></dl>
+<div class="row"><button id="wake">Start conversation</button><button id="hangup" class="g">Hang up</button></div>
+<div class="row"><button id="mute" class="g">Mute microphone</button><button id="logout" class="g">Sign out</button></div>
+<label for="vol">Speaker volume <span class="mv" id="volv"></span></label>
+<div class="row"><input type="range" id="vol" min="0" max="150" step="5"><button id="tsound" class="g">Test sound</button></div>
+<label for="vboost">ChatGPT voice boost <span class="mv" id="vboostv"></span></label>
+<input type="range" id="vboost" min="0" max="12" step="1">
+<details id="eqbox"><summary>Sound / equalizer</summary>
+<label><input type="checkbox" id="eqon"> Equalizer on</label>
+<label for="eqhp">Bass cut <span class="mv" id="eqhpv"></span></label><input type="range" id="eqhp" min="0" max="300" step="10">
+<label for="eqwa">Warmth (400 Hz) <span class="mv" id="eqwav"></span></label><input type="range" id="eqwa" min="-6" max="9" step="1">
+<label for="eqpr">Presence (2.5 kHz) <span class="mv" id="eqprv"></span></label><input type="range" id="eqpr" min="-6" max="6" step="1">
+<label for="eqtr">Treble (above 5 kHz) <span class="mv" id="eqtrv"></span></label><input type="range" id="eqtr" min="-12" max="6" step="1">
+<button id="eqreset" class="g">Reset to defaults</button>
+<p class="hint">Changes apply instantly — adjust while ChatGPT is talking. Bass cut removes lows a small speaker cannot play (more clean loudness); warmth makes it fuller; less treble makes it less tinny.</p>
+</details>
+<p class="hint">Volume sets everything; voice boost lifts only ChatGPT's voice (speech is much quieter on average than the chimes). Loud peaks are softened instead of clipped. The test sound is a steady 2 s tone: if it crackles, check the speaker wire.</p>
+<p class="hint">Say “Seneca” (SEN-e-ka) to start a conversation. Say “Seneca, stop” to end it. Speak over a reply to interrupt. Connect headphones or a speaker to hear replies.</p></section>
+<section><h2>AirPlay output (experimental)</h2>
+<p class="hint">Send sound to an AirPlay speaker such as a HomePod mini. Step 1: find speakers, pick one, send a short test tone (2 s, 440 Hz, about 2 s delay).</p>
+<button id="apscan" class="g">Find AirPlay speakers</button>
+<div id="aplist"></div>
+<p class="hint" id="apout"></p>
+<div class="row"><button id="apuse" class="g" disabled>Use selected for calls</button><button id="apbuiltin" class="g">Use built-in speaker</button></div>
+<label for="apvol">AirPlay volume <span class="mv" id="apvolv"></span></label>
+<input type="range" id="apvol" min="0" max="100" step="5">
+<div class="row" id="aprow" hidden><button id="aptone">Send test tone</button></div>
+<div class="row"><button id="apmeasure" class="g">Measure latency &amp; stop time</button></div>
+<p class="hint" id="apmeas"></p>
+<label for="apoff">Echo sync trim <span class="mv" id="apoffv"></span></label>
+<input type="range" id="apoff" min="-500" max="500" step="10">
+<p class="hint">Calls use the chosen AirPlay speaker automatically (it connects while the call starts; ChatGPT sounds ~2 s later). The trim shifts the echo-cancellation reference if Seneca starts hearing itself.</p>
+<div class="row" id="appinrow" hidden><input id="appin" inputmode="numeric" maxlength="4" placeholder="4-digit PIN"><button id="appinsend" class="g">Send PIN</button></div>
+<p class="hint" id="apstat"></p>
+</section>
+<section><h2>Microphone diagnostics</h2>
+<p class="hint">What the speaker actually receives from the XVF3800 (the same audio the wake word, interruption and ChatGPT get). Turn on live view, then walk around and speak.</p>
+<div class="row"><button id="dlive" class="g">Start live view</button><button id="wtest" class="g">Start wake-word test</button></div>
+<p class="hint" id="wtesth">Wake-word test: say “Seneca” from different distances. Each detection beeps and is listed below, but never starts a conversation; works while the microphone is muted (nothing is sent anywhere).</p>
+<div id="dpanel" hidden>
+<label>Microphone level <span class="mv" id="dmic"></span></label>
+<div class="meter" id="mmic"><div class="fill"></div><div class="mk nf"></div><div class="mk th"></div><div class="mk pk"></div></div>
+<div class="hint">Green = level (100 ms), orange = peak, grey = background noise, red = interrupt threshold. Scale −70 to 0 dBFS.</div>
+<label>Speaker output <span class="mv" id="dout"></span></label>
+<div class="meter" id="mout"><div class="fill"></div></div>
+<label>“Seneca” confidence <span class="mv" id="dwk"></span></label>
+<canvas id="dcv" width="600" height="180"></canvas>
+<div class="hint">Last 15 s. Red line = trigger threshold. Peaks that stay below it are near misses.</div>
+<label>Recent “Seneca”-like sounds</label><ol id="ev"><li class="hint">None yet</li></ol>
+<div class="row"><button id="drec" class="g">Record microphone 5 s</button><button id="drecout" class="g">Record speaker output 5 s</button></div>
+<p class="hint" id="drs"></p>
+<audio id="dau" controls hidden></audio>
+<a id="ddl" hidden download="speaker-mic.wav">Download recording (WAV)</a>
+</div></section>
+<form id="f"><section><h2>Sign in to ChatGPT</h2>
+<p class="hint">Import your current ChatGPT session. The speaker keeps it in device storage and never displays it again.</p>
+<ol class="hint"><li>Sign in at chatgpt.com in Safari.</li><li>Open Develop → Show Web Inspector → Storage → Cookies → chatgpt.com.</li><li>Copy the value of <code>__Secure-next-auth.session-token.0</code> into the first field and <code>.1</code> into the second. For a single unnumbered cookie, use only the first field.</li></ol>
+<label for="c0">Session cookie .0</label><input id="c0" type="password" autocomplete="off" autocapitalize="none" spellcheck="false" required>
+<label for="c1">Session cookie .1 (if present)</label><input id="c1" type="password" autocomplete="off" autocapitalize="none" spellcheck="false">
+<button id="save" type="submit">Save and sign in</button></section></form>
+<p id="msg" role="status" aria-live="polite"></p>
+<script>
+const $ = id => document.getElementById(id);
+const H = {'Content-Type':'application/json','X-Speaker-Setup':'1'};
+function say(text, ok=false) { $('msg').textContent=text; $('msg').className=ok?'ok':'bad'; }
+let statusGeneration=0, pendingAction=null, controlBusy=false;
+async function call(path, body) {
+ const abort=new AbortController(), timer=setTimeout(()=>abort.abort(),5000);
+ try {
+  const res=await fetch(path, {method:body===undefined?'GET':'POST',headers:H,cache:'no-store',signal:abort.signal,...(body===undefined?{}:{body:JSON.stringify(body)})});
+  const data=await res.json();
+  if (!res.ok || data.ok===false) throw Error(data.message || 'Request failed ('+res.status+')');
+  return data;
+ } finally { clearTimeout(timer); }
+}
+function conversation(s) {
+ if (s.state==='idle') return s.call_active?'Ending conversation…':'Idle — call ended';
+ if (s.state==='in_call') {
+  if (!s.call_connected) return 'Connection lost — ending conversation…';
+  if (s.remote_state==='halted') return 'Paused — call still connected';
+  return ({speaking:'ChatGPT is speaking',thinking:'ChatGPT is thinking',listening:'Listening — call connected',listening_intently:'Listening — call connected'})[s.remote_state]||'Call connected';
+ }
+ return ({signaling:'Starting conversation…',connecting:'Connecting…',backoff:'Reconnecting…',authing:'Checking sign-in…',needs_login:'Sign in below',wait_wifi:'Waiting for Wi-Fi…'})[s.state]||'Unknown';
+}
+function rows(items) {
+ $('st').replaceChildren(...items.flatMap(([k,v])=>{const a=document.createElement('dt'),b=document.createElement('dd');a.textContent=k;b.textContent=v;return[a,b];}));
+}
+async function status() {
+ const generation=++statusGeneration;
+ try {
+  const s=await call('/api/status');
+  if (generation!==statusGeneration) return;
+  rows([['Wi-Fi',s.wifi.connected?s.wifi.ssid:'Connecting…'],['Connection',s.tunnel_up?'Ready':'Reconnecting…'],['ChatGPT',s.logged_in?(s.email||'Signed in'):(s.has_credentials?'Checking session…':'Sign in below')],['Conversation',conversation(s)],['Seneca',s.wake_ready?(s.wake_test?'Test mode — beeps only, no conversation':s.muted?'Muted — unmute to use Seneca':'Listening for Seneca'):'Starting…'],['Wake detections',String(s.wake_detections)],['Last error',s.last_error||'None']]);
+  $('mute').textContent=s.muted?'Unmute microphone':'Mute microphone';
+  if(typeof s.voice_boost==='number' && !vbDragging){$('vboost').max=s.voice_boost_max||12;$('vboost').value=s.voice_boost;$('vboostv').textContent='+'+s.voice_boost+' dB';}
+  showEq(s.eq);
+  if(typeof s.airplay_volume==='number'&&!apDragging){$('apvol').value=s.airplay_volume;$('apvolv').textContent=s.airplay_volume+' %';}
+  if(typeof s.airplay_output==='string'){$('apout').textContent='Call audio: '+(s.airplay_output?('AirPlay → '+s.airplay_output+(s.airplay_routed?' (playing now)':'')):'built-in speaker');}
+  if(typeof s.airplay_offset_ms==='number'&&!apOffDrag){$('apoff').value=s.airplay_offset_ms;$('apoffv').textContent=(s.airplay_offset_ms>0?'+':'')+s.airplay_offset_ms+' ms';}
+  if(typeof s.airplay_measure==='string'){$('apmeas').textContent='Measurement: '+s.airplay_measure.replace(/ \| /g,'\n');$('apmeas').style.whiteSpace='pre-line';$('apmeasure').disabled=!!s.airplay_measuring||!s.airplay_output;}
+  if(typeof s.airplay_status==='string'){$('apstat').textContent='AirPlay: '+s.airplay_status;$('aptone').disabled=!!s.airplay_busy||$('aplist').dataset.sel===undefined;$('appinrow').hidden=!/PIN required/.test(s.airplay_status);}
+  wakeTest=!!s.wake_test; $('wtest').textContent=wakeTest?'Stop wake-word test':'Start wake-word test';
+  if(typeof s.volume==='number' && !volDragging){$('vol').max=s.volume_max||150;$('vol').value=s.volume;$('volv').textContent=s.volume+' %';}
+  $('wake').disabled=controlBusy || !s.logged_in || s.muted || s.state!=='idle' || s.call_active;
+  $('hangup').disabled=controlBusy || (s.state==='idle' && !s.call_active);
+  $('logout').disabled=controlBusy || !s.has_credentials;
+  if (pendingAction==='hangup' && s.state==='idle' && !s.call_active) {pendingAction=null;say('Call ended.',true);}
+  if (pendingAction==='wake' && s.state==='in_call' && s.call_connected) {pendingAction=null;say('Conversation connected.',true);}
+ } catch(e) {
+  if (generation!==statusGeneration) return;
+  rows([['Connection','Speaker unreachable'],['Conversation','Unknown — status unavailable']]);
+  $('wake').disabled=true;
+  $('hangup').disabled=controlBusy;
+  say('Cannot reach the speaker. Conversation status is unknown.');
+ }
+}
+for(const action of ['wake','hangup','mute']) $(action).onclick=async()=>{
+ if(controlBusy)return;
+ controlBusy=true; ++statusGeneration; pendingAction=action;
+ try {
+  await call('/api/control',{action});
+  say(action==='wake'?'Starting conversation…':action==='hangup'?'Ending conversation…':'Microphone updated.',true);
+ } catch(e) {pendingAction=null;say(e.message);}
+ finally {controlBusy=false;await status();}
+};
+let apDragging=false, apOffDrag=false;
+$('apmeasure').onclick=async()=>{try{await call('/api/control',{action:'airplay_measure'});say('Measuring — beeps and tones on the AirPlay speaker for about a minute. Keep the room quiet.',true);await status();}catch(e){say(e.message);}};
+$('apoff').oninput=()=>{apOffDrag=true;$('apoffv').textContent=$('apoff').value+' ms';};
+$('apoff').onchange=async()=>{try{await call('/api/control',{action:'airplay_offset',value:Number($('apoff').value)});}catch(e){say(e.message);}finally{apOffDrag=false;}};
+$('apuse').onclick=async()=>{const i=$('aplist').dataset.sel; if(i===undefined)return;
+ try{await call('/api/control',{action:'airplay_output',index:Number(i)});say('Calls will play on the AirPlay speaker.',true);await status();}catch(e){say(e.message);}};
+$('apbuiltin').onclick=async()=>{try{await call('/api/control',{action:'airplay_output',index:-1});say('Calls play on the built-in speaker.',true);await status();}catch(e){say(e.message);}};
+$('apvol').oninput=()=>{apDragging=true;$('apvolv').textContent=$('apvol').value+' %';};
+$('apvol').onchange=async()=>{try{await call('/api/control',{action:'airplay_volume',value:Number($('apvol').value)});}catch(e){say(e.message);}finally{apDragging=false;}};
+$('apscan').onclick=async()=>{
+ $('apscan').disabled=true; $('aplist').textContent='Searching…';
+ try{const r=await fetch('/api/airplay/scan',{headers:H,cache:'no-store'});const d=await r.json();
+  if(!r.ok||d.ok===false){$('aplist').textContent=d.message||('Search failed ('+r.status+')');$('aprow').hidden=true;return;}
+  const sp=d.speakers||[]; delete $('aplist').dataset.sel;
+  if(!sp.length){$('aplist').textContent='No AirPlay speakers found on this network.';$('aprow').hidden=true;}
+  else{$('aplist').replaceChildren(...sp.map(x=>{const l=document.createElement('label');
+   l.innerHTML=`<input type="radio" name="apspk" value="${x.index}"> ${x.name.replace(/</g,'&lt;')} <span class="mv">${x.ip} · ${x.model||''}${x.airplay2?' · AirPlay 2':''}${x.pin?' · PIN':''}</span>`;
+   l.querySelector('input').onchange=()=>{$('aplist').dataset.sel=x.index;$('aptone').disabled=false;$('apuse').disabled=false;};return l;}));
+   $('aprow').hidden=false;$('aptone').disabled=true;}
+ }catch(e){$('aplist').textContent='Scan failed: '+e.message;}
+ finally{$('apscan').disabled=false;}
+};
+$('aptone').onclick=async()=>{const i=$('aplist').dataset.sel; if(i===undefined)return;
+ try{await call('/api/control',{action:'airplay_tone',index:Number(i)});say('Sending test tone…',true);}catch(e){say(e.message);}};
+$('appinsend').onclick=async()=>{try{await call('/api/control',{action:'airplay_pin',pin:$('appin').value.trim()});say('PIN sent.',true);}catch(e){say(e.message);}};
+let volDragging=false, vbDragging=false, wakeTest=false, eqDragging=false;
+const EQ=[['eqhp','hpf_hz',v=>v==0?'off':v+' Hz'],['eqwa','warmth_db',v=>(v>0?'+':'')+v+' dB'],['eqpr','presence_db',v=>(v>0?'+':'')+v+' dB'],['eqtr','treble_db',v=>(v>0?'+':'')+v+' dB']];
+function eqLabels(){for(const[id,,fmt]of EQ)$(id+'v').textContent=fmt(Number($(id).value));}
+function showEq(e){if(!e||eqDragging)return;$('eqon').checked=e.on;for(const[id,k]of EQ)$(id).value=(k==='hpf_hz'&&e[k]>0&&e[k]<40)?40:e[k];eqLabels();}
+async function sendEq(){const b={action:'eq',on:$('eqon').checked};for(const[id,k]of EQ){let v=Number($(id).value);if(k==='hpf_hz'&&v>0&&v<40)v=40;b[k]=v;}
+ try{await call('/api/control',b);say('Equalizer updated.',true);}catch(e){say(e.message);}finally{eqDragging=false;}}
+for(const[id]of EQ){$(id).oninput=()=>{eqDragging=true;eqLabels();};$(id).onchange=sendEq;}
+$('eqon').onchange=sendEq;
+$('eqreset').onclick=async()=>{try{await call('/api/control',{action:'eq_reset'});say('Equalizer reset to defaults.',true);await status();}catch(e){say(e.message);}};
+$('vboost').oninput=()=>{vbDragging=true;$('vboostv').textContent='+'+$('vboost').value+' dB';};
+$('vboost').onchange=async()=>{try{await call('/api/control',{action:'voice_boost',value:Number($('vboost').value)});say('Voice boost set to +'+$('vboost').value+' dB.',true);}catch(e){say(e.message);}finally{vbDragging=false;}};
+$('wtest').onclick=async()=>{try{await call('/api/control',{action:'wake_test',on:!wakeTest});wakeTest=!wakeTest;
+ say(wakeTest?'Wake-word test on: say “Seneca” — a beep means it heard you.':'Wake-word test off.',true);
+ if(wakeTest&&!dOn) $('dlive').onclick(); await status();}catch(e){say(e.message);}};
+$('vol').oninput=()=>{volDragging=true;$('volv').textContent=$('vol').value+' %';};
+$('vol').onchange=async()=>{try{await call('/api/control',{action:'volume',value:Number($('vol').value)});say('Volume set to '+$('vol').value+' %.',true);}catch(e){say(e.message);}finally{volDragging=false;}};
+$('tsound').onclick=async()=>{try{await call('/api/control',{action:'test_sound'});say('Playing test sound…',true);}catch(e){say(e.message);}};
+$('logout').onclick=async()=>{try{++statusGeneration;await call('/api/logout',{});say('Signing out…',true);await status();}catch(e){say(e.message);}};
+$('f').onsubmit=async ev=>{
+ ev.preventDefault();const a=$('c0').value.trim(),b=$('c1').value.trim();
+ if(!a || /[;\s]/.test(a+b)) return say('Paste only the cookie values, without spaces or semicolons.');
+ $('save').disabled=true;
+ try{await call('/api/setup',{session:{chunk0:a,chunk1:b||null}});$('c0').value='';$('c1').value='';say('Session saved. Checking sign-in…',true);await status();}catch(e){say(e.message);}finally{$('save').disabled=false;}
+};
+
+// ---- microphone diagnostics ----
+const DMIN=-70, pct=db=>Math.max(0,Math.min(100,(db-DMIN)/(-DMIN)*100));
+let dOn=false, dBusy=false, dHist=[], dTimer=null, recUrl=null;
+function meter(id, rms, peak, noise, thr) {
+ const m=$(id); if(!m||!m.querySelector) return;
+ m.querySelector('.fill').style.width=pct(rms)+'%';
+ const set=(cls,db)=>{const e=m.querySelector(cls); if(e) e.style.left=(db===undefined?-10:pct(db))+'%';};
+ set('.pk',peak); set('.nf',noise); set('.th',thr);
+}
+function drawWake() {
+ const c=$('dcv'); if(!c.getContext) return; const g=c.getContext('2d'), W=c.width, H=c.height;
+ g.clearRect(0,0,W,H);
+ g.strokeStyle='#d33'; g.setLineDash([6,4]); g.beginPath(); const y72=H-H*0.72; g.moveTo(0,y72); g.lineTo(W,y72); g.stroke(); g.setLineDash([]);
+ g.strokeStyle='#0a7'; g.lineWidth=2; g.beginPath();
+ dHist.forEach((v,i)=>{const x=W*i/99, y=H-H*v/100; i?g.lineTo(x,y):g.moveTo(x,y);}); g.stroke();
+}
+async function diagTick() {
+ if(!dOn||dBusy) return; dBusy=true;
+ try {
+  const d=await call('/api/diag');
+  if(d.muted){$('dmic').textContent='microphone muted';} else
+   $('dmic').textContent=`${d.mic_rms_db.toFixed(1)} dBFS · peak ${d.mic_peak_db.toFixed(1)} · noise ${d.mic_noise_db.toFixed(1)} · clipped ${d.mic_clips}`;
+  meter('mmic', d.mic_rms_db, d.mic_peak_db, d.mic_noise_db, d.barge_in_db);
+  $('dout').textContent=(d.out_rms_db<=-119?'silent':`${d.out_rms_db.toFixed(1)} dBFS · peak ${d.out_peak_db.toFixed(1)}`)+` · softened ${d.out_limited} · voice cut-offs ${d.out_dropouts}`;
+  meter('mout', d.out_rms_db);
+  $('dwk').textContent=`${d.wake_score}% now · trigger at ${d.wake_cutoff}% · ${d.wake_detections} detections`;
+  dHist.push(d.wake_score); if(dHist.length>100) dHist.shift(); drawWake();
+  const ev=d.wake_events.map(e=>{const li=document.createElement('li'); li.textContent=`${e.ago_s}s ago: peak ${e.peak}% ${e.detected?'→ DETECTED':'(near miss)'}`; return li;});
+  if(ev.length) $('ev').replaceChildren(...ev);
+  if(d.record==='recording') $('drs').textContent=`Recording… ${d.record_pct}%`;
+  if(d.record==='ready' && $('drs').dataset.wait==='1') { $('drs').dataset.wait=''; await fetchRecording(); }
+ } catch(e) { $('dmic').textContent='unavailable'; }
+ finally { dBusy=false; }
+}
+async function fetchRecording() {
+ $('drs').textContent='Downloading recording…';
+ const res=await fetch('/api/diag/record.wav',{headers:H,cache:'no-store'});
+ if(!res.ok){$('drs').textContent='Recording not available'; $('drec').disabled=false; return;}
+ const blob=await res.blob(); if(recUrl) URL.revokeObjectURL(recUrl); recUrl=URL.createObjectURL(blob);
+ $('dau').src=recUrl; $('dau').hidden=false; $('ddl').href=recUrl; $('ddl').hidden=false;
+ $('drs').textContent='Recording ready: play it here or download it.'; $('drec').disabled=false;
+}
+$('dlive').onclick=()=>{
+ dOn=!dOn; $('dpanel').hidden=!dOn; $('dlive').textContent=dOn?'Stop live view':'Start live view';
+ if(dOn&&!dTimer) dTimer=setInterval(diagTick,150); if(!dOn&&dTimer){clearInterval(dTimer);dTimer=null;}
+};
+$('drecout').onclick=async()=>{
+ try{ $('drecout').disabled=true; $('drs').dataset.wait='1'; await call('/api/control',{action:'record_out'}); $('drs').textContent='Armed: records the next 5 s the speaker plays (ask ChatGPT something)';
+  $('ddl').download='speaker-output.wav'; if(!dOn) $('dlive').onclick(); }
+ catch(e){ $('drs').textContent=e.message; }
+ finally{ $('drecout').disabled=false; }
+};
+$('drec').onclick=async()=>{ $('ddl').download='speaker-mic.wav';
+ try{ $('drec').disabled=true; $('drs').dataset.wait='1'; await call('/api/control',{action:'record'}); $('drs').textContent='Recording… speak now';
+  if(!dOn) $('dlive').onclick(); }
+ catch(e){ $('drs').textContent=e.message; $('drec').disabled=false; }
+};
+let pollInFlight=false;
+function poll(){if(pollInFlight)return;pollInFlight=true;status().finally(()=>{pollInFlight=false;});}
+poll();setInterval(poll,1000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)status();});
+</script></body></html>

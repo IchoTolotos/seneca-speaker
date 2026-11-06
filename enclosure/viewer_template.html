@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Seneca speaker – enclosure viewer</title>
+<style>
+/*__CSS__*/html,body{margin:0;height:100%;background:#f3f2ee;font:14px -apple-system,system-ui,sans-serif;color:#222;overflow:hidden}
+#wrap{position:fixed;inset:0}
+#c{position:absolute;inset:0;width:100%;height:100%}
+#ui{position:absolute;left:14px;top:14px;width:270px;background:rgba(255,255,255,.92);border:1px solid #ddd;border-radius:10px;padding:12px 14px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+h1{font-size:15px;margin:0 0 4px}
+.sub{font-size:12px;color:#666;margin-bottom:10px}
+label{display:flex;align-items:center;gap:8px;margin:5px 0;cursor:pointer}
+input[type=range]{width:100%}
+.sw{width:12px;height:12px;border-radius:3px;border:1px solid rgba(0,0,0,.2);flex:none}
+.row{display:flex;gap:6px;margin-top:8px}
+button{flex:1;padding:6px;border:1px solid #ccc;border-radius:7px;background:#fff;cursor:pointer;font:inherit}
+.hint{font-size:11px;color:#777;margin-top:8px}
+</style></head><body>
+<div id="wrap"><canvas id="c"></canvas>
+<div id="ui">
+  <h1>Seneca speaker enclosure (A)</h1>
+  <div class="sub">Ø112.8 × 63.9 mm · one-piece shell + bottom plate with speaker bracket</div>
+  <label style="display:block">Explode <span id="ev">0 %</span><input id="explode" type="range" min="0" max="100" value="0"></label>
+  <div id="parts"></div>
+  <label><input type="checkbox" id="cut"> Cutaway (half section)</label>
+  <label><input type="checkbox" id="ghost"> See-through shell + bottom</label>
+  <div class="row"><button id="front">Front</button><button id="back">Back</button><button id="iso">3D</button></div>
+  <div class="hint">Drag to rotate · scroll / pinch to zoom · right-drag or shift-drag to pan</div>
+</div></div>
+<script type="text/plain" id="three-src">/*__THREE__*/</script>
+<script type="module">
+const DATA = /*__PARTS__*/null;
+const THREE = await /*__THREE_LOAD__*/import(URL.createObjectURL(new Blob([document.getElementById('three-src').textContent], {type: 'text/javascript'})));
+
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({canvas, antialias: true});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.localClippingEnabled = true;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#f3f2ee');
+const camera = new THREE.PerspectiveCamera(35, 1, 1, 5000);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8a8a80, 1.6));
+const key = new THREE.DirectionalLight(0xffffff, 1.8); key.position.set(150, 300, 200); scene.add(key);
+const fill = new THREE.DirectionalLight(0xffffff, 0.6); fill.position.set(-200, 100, -150); scene.add(fill);
+
+// CAD is z-up (mm); three.js is y-up.
+const root = new THREE.Group(); root.rotation.x = -Math.PI / 2; scene.add(root);
+const clip = new THREE.Plane(new THREE.Vector3(-1, 0, 0), 0); // cutaway: hides the x > 0 half
+const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0)).buffer;
+const meshes = [];
+for (const p of DATA.parts) {
+  const q = new Int16Array(b64(p.pos)), idx = p.u16 ? new Uint16Array(b64(p.idx)) : new Uint32Array(b64(p.idx));
+  const pos = new Float32Array(q.length); for (let i = 0; i < q.length; i++) pos[i] = q[i] * DATA.q;
+  let g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setIndex(new THREE.BufferAttribute(idx, 1));
+  g = g.toNonIndexed(); g.computeVertexNormals();
+  const m = new THREE.MeshStandardMaterial({color: p.color, roughness: 0.75, metalness: 0.05, side: THREE.DoubleSide,
+                                            transparent: true, opacity: p.opacity});
+  const mesh = new THREE.Mesh(g, m); mesh.userData = p; root.add(mesh); meshes.push(mesh);
+  const lab = document.createElement('label');
+  lab.innerHTML = `<input type="checkbox" checked><span class="sw" style="background:${p.color}"></span>${p.label}`;
+  lab.querySelector('input').onchange = e => { mesh.visible = e.target.checked; };
+  document.getElementById('parts').appendChild(lab);
+}
+
+const ex = document.getElementById('explode');
+function applyExplode() {
+  const f = ex.value / 100; document.getElementById('ev').textContent = ex.value + ' %';
+  const e = f * f * (3 - 2 * f); // smoothstep
+  for (const m of meshes) m.position.set(m.userData.explode[0] * e, m.userData.explode[1] * e, m.userData.explode[2] * e);
+  explodeE = e; if (typeof place === 'function') place();
+}
+ex.oninput = applyExplode;
+document.getElementById('cut').onchange = e => { for (const m of meshes) m.material.clippingPlanes = e.target.checked ? [clip] : []; };
+document.getElementById('ghost').onchange = e => {
+  for (const s of meshes.filter(m => ['shell', 'bottom'].includes(m.userData.name))) { s.material.opacity = e.target.checked ? 0.25 : 1; s.material.depthWrite = !e.target.checked; }
+};
+
+// minimal orbit controls (no extra library)
+let theta = Math.PI - 0.75, phi = 1.15, dist = 380; const target = new THREE.Vector3(0, 10, 0);
+let explodeE = 0; // camera backs off and recentres as the parts spread
+function place() {
+  const d = dist * (1 + 1.25 * explodeE), t = target.clone(); t.y += 15 * explodeE;
+  camera.position.set(t.x + d * Math.sin(phi) * Math.sin(theta), t.y + d * Math.cos(phi), t.z + d * Math.sin(phi) * Math.cos(theta));
+  camera.lookAt(t);
+}
+let drag = null;
+canvas.addEventListener('pointerdown', e => { drag = {x: e.clientX, y: e.clientY, pan: e.button === 2 || e.shiftKey}; canvas.setPointerCapture(e.pointerId); });
+canvas.addEventListener('pointermove', e => {
+  if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.x = e.clientX; drag.y = e.clientY;
+  if (drag.pan) {
+    const right = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0), up = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1);
+    target.addScaledVector(right, -dx * dist / 900).addScaledVector(up, dy * dist / 900);
+  } else { theta -= dx * 0.008; phi = Math.min(3.05, Math.max(0.08, phi - dy * 0.008)); }
+  place();
+});
+canvas.addEventListener('pointerup', () => drag = null);
+canvas.addEventListener('contextmenu', e => e.preventDefault());
+canvas.addEventListener('wheel', e => { e.preventDefault(); dist = Math.min(1500, Math.max(80, dist * Math.exp(e.deltaY * 0.001))); place(); }, {passive: false});
+const view = (t, p) => () => { theta = t; phi = p; place(); };
+// CAD (x,y,z) -> world (x, z, -y): the front (+y, grille) faces world -z
+document.getElementById('front').onclick = view(Math.PI, 1.4);
+document.getElementById('back').onclick = view(0, 1.4);
+document.getElementById('iso').onclick = view(Math.PI - 0.75, 1.05);
+
+const wrap = document.getElementById('wrap');
+function resize() { const w = wrap.clientWidth, h = wrap.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+const qs = new URLSearchParams(location.search); if (qs.has('explode')) ex.value = qs.get('explode');
+addEventListener('resize', resize); resize(); applyExplode(); place();
+renderer.setAnimationLoop(() => renderer.render(scene, camera));
+</script>
+</body></html>

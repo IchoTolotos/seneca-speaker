@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "gpt-live-speaker",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": { "directory": "./public", "binding": "ASSETS", "run_worker_first": ["/api/*"] },
+  // Stores the encrypted ChatGPT web session, cached access token and session overrides.
+  // `wrangler dev` uses a local simulation; run `wrangler kv namespace create STATE`
+  // before the first deploy and paste the id here.
+  "kv_namespaces": [{ "binding": "STATE", "id": "REPLACE_ON_DEPLOY" }],
+  "observability": { "enabled": true }
+  // Secrets (set with `wrangler secret put`, or in .dev.vars locally):
+  //   ADMIN_TOKEN     bearer for the test page and API
+  //   ENCRYPTION_KEY  base64 32-byte AES-GCM key (`npm run keygen`)
+}

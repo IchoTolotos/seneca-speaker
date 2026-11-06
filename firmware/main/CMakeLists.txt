@@ -1,0 +1,50 @@
+idf_component_register(
+    SRCS
+        "main.c"
+        "wifi.c"
+        "gls_http.c"
+        "probe.c"
+        "sc_port.c"
+        "chatgpt_auth.c"
+        "chatgpt_wm.c"
+        "xvf3800_i2s.c"
+        "media.c"
+        "rtc_peer.c"
+        "controller.c"
+        "led.c"
+        "gls_wg.c"
+        "chime.c"
+        "audio_diag.c"
+        "setup.c"
+        "xvf_ctrl.c"
+        "airplay_measure.c"
+        "wake_word.cpp"
+    EMBED_TXTFILES "../web/setup.html"
+    EMBED_FILES "../../wakeword/seneca/seneca.tflite"
+    INCLUDE_DIRS "."
+    REQUIRES
+        speaker_core
+        esp_driver_i2c
+        airplay_tx
+        esp_wifi
+        esp_netif
+        esp_event
+        esp_http_server
+        espressif__esp-tflite-micro
+        esphome__esp-micro-speech-features
+        esp_http_client
+        esp-tls
+        esp_timer
+        esp_driver_i2s
+        esp_driver_gpio
+        nvs_flash
+        json
+        esp_app_format
+        espressif__esp_peer
+        espressif__esp_capture
+        tempotian__av_render
+        espressif__esp_audio_codec
+        espressif__media_lib_sal
+        esphome__wireguard
+        lwip
+)

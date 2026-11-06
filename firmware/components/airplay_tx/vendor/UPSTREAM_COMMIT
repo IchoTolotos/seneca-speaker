@@ -1,0 +1,3 @@
+upstream: https://github.com/amcchord/AirPlayKnob
+416c2adbff4272e34942393653bba4d06d007b1d
+--- local changes to the vendored sender are marked [gls]

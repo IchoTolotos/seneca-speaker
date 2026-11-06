@@ -1,0 +1,252 @@
+menu "GPT Live Speaker"
+
+    menu "Wi-Fi"
+        config GLS_WIFI_SSID
+            string "Wi-Fi SSID"
+            default ""
+            help
+                Temporary: Wi-Fi credentials are compiled in until provisioning exists.
+                They end up in sdkconfig (git-ignored). Never commit them.
+
+        config GLS_WIFI_PASSWORD
+            string "Wi-Fi password"
+            default ""
+
+        config GLS_WIFI_CONNECT_TIMEOUT_MS
+            int "Wi-Fi connect timeout (ms)"
+            default 30000
+    endmenu
+
+    menu "Relay tunnel (WireGuard)"
+        config WIREGUARD_MAX_SRC_IPS
+            int
+            default 2
+            range 2 8
+            help
+                esphome/wireguard defaults to one allowed-address slot and uses it for the
+                device's own tunnel address. Reserve another for the relay peer, otherwise
+                esp_wireguard_add_allowed_ip fails and data cannot traverse the tunnel.
+
+        config GLS_WG_ENABLE
+            bool "Reach the chatgpt.com relay through a WireGuard tunnel"
+            default n
+            help
+                chatgpt.com's Cloudflare edge challenges the ESP32's own TLS client, so the two HTTP calls
+                go through a relay (relay/relay.py) on a machine at home, reached over WireGuard.
+                Only requests to the base URL are bound to the tunnel interface; everything else
+                (WebRTC media, SNTP) uses Wi-Fi directly. Keys end up in sdkconfig (git-ignored).
+
+        config GLS_WG_PRIVATE_KEY
+            string "Interface private key (base64)"
+            depends on GLS_WG_ENABLE
+            default ""
+
+        config GLS_WG_ADDRESS
+            string "Tunnel IPv4 address"
+            depends on GLS_WG_ENABLE
+            default "10.77.0.2"
+
+        config GLS_WG_NETMASK
+            string "Tunnel netmask"
+            depends on GLS_WG_ENABLE
+            default "255.255.255.255"
+
+        config GLS_WG_PEER_PUBLIC_KEY
+            string "Peer public key (base64)"
+            depends on GLS_WG_ENABLE
+            default ""
+
+        config GLS_WG_PRESHARED_KEY
+            string "Preshared key (base64, empty = none)"
+            depends on GLS_WG_ENABLE
+            default ""
+
+        config GLS_WG_ENDPOINT
+            string "Peer endpoint host (DDNS name or IP)"
+            depends on GLS_WG_ENABLE
+            default ""
+
+        config GLS_WG_PORT
+            int "Peer endpoint port"
+            depends on GLS_WG_ENABLE
+            default 51820
+
+        config GLS_WG_KEEPALIVE_S
+            int "Persistent keepalive (s)"
+            depends on GLS_WG_ENABLE
+            default 25
+
+        config GLS_WG_ALLOWED_IP
+            string "Relay host reached through the tunnel (IPv4)"
+            depends on GLS_WG_ENABLE
+            default "10.77.0.1"
+    endmenu
+
+    menu "chatgpt.com"
+        config GLS_CHATGPT_BASE_URL
+            string "Base URL"
+            default "https://chatgpt.com"
+            help
+                With the relay: http://<relay-host>:<port>/<token>. The token part is never logged.
+
+        config GLS_USER_AGENT
+            string "User-Agent sent to chatgpt.com"
+            default "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15"
+
+        config GLS_ACCEPT_LANGUAGE
+            string "Accept-Language"
+            default "de-DE,de;q=0.9,en;q=0.8"
+
+        config GLS_CLIENT_VERSION
+            string "OAI-Client-Version"
+            default "prod-e8f67765f24e1c6773b4b61b4310d5ff9297439a"
+            help
+                Mirrors DEFAULT_REALTIME_CLIENT_VERSION in signaling/vendor/loginwithchatgpt-core.
+
+        config GLS_CLIENT_BUILD
+            string "OAI-Client-Build-Number"
+            default "8338682"
+
+        config GLS_WEB_CLIENT_ID
+            string "Expected access-token client_id"
+            default "app_X8zY6vW2pQ9tR3dE7nK1jL5gH"
+
+        config GLS_LANGUAGE
+            string "Session language_code (BCP 47, empty = null)"
+            default "de-DE"
+
+        config GLS_VOICE
+            string "Voice"
+            default "juniper"
+
+        config GLS_TIMEZONE
+            string "Session timezone (IANA name)"
+            default "Europe/Berlin"
+
+        config GLS_TZ_POSIX
+            string "POSIX TZ rule for the same zone (used for timezone_offset_min)"
+            default "CET-1CEST,M3.5.0,M10.5.0/3"
+
+        config GLS_SESSION_OVERRIDES
+            string "Session JSON overrides (JSON object, merged on top; empty = none)"
+            default ""
+
+        config GLS_HTTP_RX_BUF
+            int "esp_http_client rx buffer (bytes)"
+            default 16384
+            help
+                Response headers are accumulated per header, but keep this large: Set-Cookie
+                lines carrying the rotated session chunks are ~4 KB each.
+
+        config GLS_HTTP_TX_BUF
+            int "esp_http_client tx buffer (bytes)"
+            default 8192
+            help
+                Must be larger than the longest single request header line. The Cookie
+                header with the chunked NextAuth session is ~4.5 KB.
+
+        config GLS_HTTP_TIMEOUT_MS
+            int "HTTP timeout (ms)"
+            default 20000
+    endmenu
+
+    menu "Behaviour"
+        config GLS_RUN_PROBE
+            bool "Run chatgpt.com reachability probe at boot"
+            default y
+            help
+                GET /api/auth/session without cookie and POST /realtime/wm with a dummy
+                bearer; logs status, cf-mitigated and content-type.
+
+        config GLS_AUTO_CALL_ON_BOOT
+            bool "Start a call automatically after boot (as if BOOT was pressed)"
+            default n
+
+        config GLS_IDLE_CLOSE_S
+            int "Hang up after this many seconds without speech (0 = never)"
+            default 300
+
+        config GLS_CHATGPT_DEV_SEED
+            string "DEV ONLY: seed session if NVS is empty (raw token or JSON chunk map)"
+            default ""
+            help
+                Same format as the signaling setup page: the raw value of
+                __Secure-next-auth.session-token or a JSON object
+                {"__Secure-next-auth.session-token.0":"...","__Secure-next-auth.session-token.1":"..."}.
+                Ends up in sdkconfig (git-ignored) and in the firmware image. Development only;
+                replaced by the setup page later. Ignored once a session is stored in NVS.
+    endmenu
+
+    menu "Audio"
+        config GLS_MIC_SLOT
+            int "I2S slot carrying the processed mic (0 = left/conference beam, 1 = right/ASR)"
+            range 0 1
+            default 0
+
+        config GLS_DEFAULT_VOLUME
+            int "Digital playback volume (0-100)"
+            range 0 100
+            default 80
+
+        config GLS_OPUS_BITRATE
+            int "Opus uplink bitrate (bps)"
+            default 24000
+    endmenu
+
+    menu "WebRTC"
+        choice GLS_DC_MODE
+            prompt "Data channel on SCTP stream 0 (server's ?dcid=0)"
+            default GLS_DC_MODE_STREAM0
+            help
+                Measured against /wm (tools/fake-speaker/README.md): the server only uses SCTP
+                stream 0, never ACKs a DCEP OPEN on it, but sends/accepts data on stream 0 right
+                after SCTP is up. Odd stream ids are reset by the server, and sending on one makes
+                it ABORT the association. We therefore only ever send on stream 0.
+            config GLS_DC_MODE_STREAM0
+                bool "Stream 0, no ACK wait (register stream 0 locally, use it at once)"
+                help
+                    As SCTP client (DTLS active) esp_peer_create_data_channel() registers stream 0
+                    locally (esp_peer refuses sends on unknown streams: "Stream not found"). Its
+                    DCEP OPEN is ignored by the server; we do not wait for the ACK.
+            config GLS_DC_MODE_RAW
+                bool "Raw stream 0 (no local channel creation at all)"
+                help
+                    Never calls esp_peer_create_data_channel(). Receiving works if esp_peer accepts
+                    unannounced stream-0 data; sending likely fails with "Stream not found 0".
+            config GLS_DC_MODE_DCEP_ACK
+                bool "Wait for the DCEP ACK (browser-style in-band channel; NOT what /wm does)"
+        endchoice
+
+        config GLS_OFFER_DTLS_ACTIVE
+            bool "Offer a=setup:active (device = DTLS client = SCTP client, even stream ids)"
+            default y
+            help
+                Needed for GLS_DC_MODE_STREAM0: only as SCTP client does esp_peer give its first
+                locally created channel stream id 0. As SCTP server it would pick an odd id,
+                which the server resets; we never create (or send on) a channel in that case.
+
+        config GLS_PEER_ICE_LITE_FLAG
+            bool "esp_peer ice_use_lite_mode (as in esp-webrtc-solution's openai_demo)"
+            default y
+
+        config GLS_PEER_CONNECTED_ON_DTLS
+            bool "Report the call connected on DTLS up instead of on data-channel open"
+            default n
+    endmenu
+
+    menu "Board"
+        config GLS_BUTTON_GPIO
+            int "Button GPIO (active low)"
+            default 0
+
+        config GLS_LED_GPIO
+            int "Status LED GPIO"
+            default 21
+
+        config GLS_LED_ACTIVE_LOW
+            bool "LED is active low"
+            default y
+    endmenu
+
+
+endmenu

@@ -1,0 +1,14 @@
+# gpt-live-speaker partition table, 8 MB flash (XIAO ESP32-S3)
+# App slots are 3.5 MB: esp-webrtc-solution's openai_demo is 3.26 MB (all audio codecs +
+# software AEC); ours will be smaller (Opus only, AEC in the XVF3800) but keep headroom.
+# Name,    Type, SubType,  Offset,   Size,     Flags
+nvs,       data, nvs,      0x9000,   0x10000,
+otadata,   data, ota,      0x19000,  0x2000,
+phy_init,  data, phy,      0x1b000,  0x1000,
+# Holds the XTS keys for NVS encryption (enable CONFIG_NVS_ENCRYPTION later, see README).
+# When flash encryption is turned on this entry must get the "encrypted" flag.
+nvs_keys,  data, nvs_keys, 0x1c000,  0x1000,
+ota_0,     app,  ota_0,    0x20000,  0x380000,
+ota_1,     app,  ota_1,    0x3a0000, 0x380000,
+# Remaining 896 KB: web UI assets / logs (littlefs or spiffs, decided later).
+storage,   data, spiffs,   0x720000, 0xe0000,

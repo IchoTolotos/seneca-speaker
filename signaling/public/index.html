@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GPT-Live speaker — Phase 0</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header>
+    <h1>GPT-Live speaker · Phase 0</h1>
+    <span id="state" class="pill">idle</span>
+  </header>
+
+  <main>
+    <section>
+      <h2>1 · Access</h2>
+      <label>Admin token <input id="admin" type="password" autocomplete="off" placeholder="ADMIN_TOKEN from .dev.vars" /></label>
+      <details>
+        <summary>ChatGPT web session</summary>
+        <p class="hint">chatgpt.com → Web Inspector → Storage → Cookies. Paste <code>__Secure-next-auth.session-token.0</code> into the first box and <code>.1</code> into the second (leave the second empty if there is only one unnumbered <code>session-token</code>). Encrypted before storage, never sent back to this page.</p>
+        <textarea id="sessionToken" rows="3" placeholder="session-token.0 (or the single session-token)"></textarea>
+        <textarea id="sessionToken1" rows="2" placeholder="session-token.1"></textarea>
+        <div class="row">
+          <button id="saveSession">Save session</button>
+          <button id="clearSession" class="ghost">Forget session</button>
+        </div>
+      </details>
+      <div class="row">
+        <button id="refreshStatus">Check status</button>
+        <button id="refreshToken" class="ghost">Force token refresh</button>
+      </div>
+      <pre id="status" class="box">–</pre>
+    </section>
+
+    <section>
+      <h2>2 · Talk</h2>
+      <div class="row">
+        <label>Voice
+          <select id="voice">
+            <option>juniper</option><option>arbor</option><option>breeze</option><option>cove</option>
+            <option>ember</option><option>maple</option><option>sol</option><option>spruce</option><option>vale</option>
+          </select>
+        </label>
+        <label>Language <input id="language" value="de-DE" size="8" /></label>
+        <label><input id="videoLine" type="checkbox" checked /> inert video m-line</label>
+      </div>
+      <div class="row">
+        <button id="connect">Connect</button>
+        <button id="hangup" class="ghost" disabled>Hang up</button>
+        <button id="mute" class="ghost" disabled>Mute mic</button>
+        <button id="stopSpeaking" class="ghost" disabled>Stop speaking</button>
+      </div>
+      <div class="row">
+        <input id="typed" placeholder="Type a message into the live session (relay_message)" style="flex:1" />
+        <button id="sendTyped" class="ghost" disabled>Send</button>
+      </div>
+      <div class="row hint">
+        <span>Connect: <b id="tConnect">–</b></span>
+        <span>First audio: <b id="tAudio">–</b></span>
+      </div>
+      <div id="transcript" class="box transcript"></div>
+    </section>
+
+    <section class="wide">
+      <h2>3 · Data channel events</h2>
+      <div class="row">
+        <label><input id="onlyInteresting" type="checkbox" /> only search / tool / source-looking events</label>
+        <span id="counts" class="hint"></span>
+        <button id="download" class="ghost">Download log</button>
+        <button id="clearLog" class="ghost">Clear</button>
+      </div>
+      <div id="events" class="box events"></div>
+    </section>
+
+    <section class="wide">
+      <h2>4 · Session payload</h2>
+      <p class="hint">What we sent to <code>/realtime/wm</code> last time, and extra fields merged on top (copy them from the chatgpt.com request to compare).</p>
+      <div class="cols">
+        <div><h3>Last sent</h3><pre id="sentSession" class="box">–</pre></div>
+        <div><h3>Overrides</h3><textarea id="overrides" rows="14">{}</textarea><button id="saveOverrides">Save overrides</button></div>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
