@@ -154,7 +154,7 @@ The answer simply mirrors the offered m-lines. With video offered, the answer co
   `reasoning_recap` "Worked for 14s", 19 `url_moderation` events (image/article URLs), then the
   spoken answer (~16.7 s after the relay) and a written `text` message with a `genui{news_article_widget…}`
   block. `spawn_update` start→end bracketed the work (17.7 s). Captured in `captures/03-research-events.jsonl`.
-- `usage_update`: audio ≈ 53 878 s remaining, session cap ≈ 7 172 s (≈ 2 h) — matches Safari.
+- `usage_update`: audio ≈ 53 878 s remaining, session cap ≈ 7 172 s (≈ 2 h), matching Safari.
 
 ### Auth / cookies
 - `auth/session` over HTTP/1.1 from Python works (no Cloudflare challenge). `Set-Cookie` rotated

@@ -1,4 +1,4 @@
-# Seneca – a DIY ChatGPT voice speaker
+# Seneca: a DIY ChatGPT voice speaker
 
 <p align="center"><img src="docs/images/enclosure.png" width="420" alt="Seneca speaker enclosure"></p>
 
@@ -147,7 +147,7 @@ The firmware can then relax the XVF3800's residual echo suppression during AirPl
 over-subtraction 0.5/0.7). That lets you interrupt at normal speaking volume instead of having
 to shout over the assistant.
 
-An earlier version estimated the delay from queue fill levels. That estimate shifted by 60–150 ms
+An earlier version estimated the delay from queue fill levels. That estimate shifted by 60 to 150 ms
 at every turn, the canceller kept losing track, and the suppressor then muted the user as well.
 
 ## Repository layout
