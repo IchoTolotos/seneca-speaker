@@ -13,7 +13,7 @@ Model chosen by validation score (seed 2 of 3), not by test score.
 | 0.36 | ~8 % | 0.5 |
 
 Sound-alikes (Senegal, Monica, Sedona, Rebecca, German Senke/Monika/…): ~5–7 % trigger at the default cutoff
-(the best "Hey Chat" model: ~29 %). Recipe average over 3 seeds: 8.3 % missed at 0.5 FA/h.
+(an earlier "Hey Chat" model: ~29 %). Recipe average over 3 seeds: 8.3 % missed at 0.5 FA/h.
 
 `tensor_arena_size` in the manifest is a conservative estimate. On the ESP32-S3 runtime
 (2026-10-28), `arena_used_bytes()` measured 39,436 bytes; the runtime currently reserves 256 KB
@@ -33,3 +33,20 @@ python3 sweep.py "sen_en_pw2_w128_s2|--batch 4096 --steps 5000 --schedule cosine
 Architecture: mixednet, pointwise 128x4, first conv 64/5, kernels [5],[7,11],[9,15],[23], stride 3.
 Training data: 14.5k English "Seneca" clips (Piper, 800+10 voices), 16k sound-alikes (hard ones at half penalty),
 speech/dinner-party/no-speech negatives; positives weighted 2x.
+
+## Training data and credits
+
+The model contains no recordings of real people saying "Seneca". The positives are synthetic, and
+the negatives and augmentation come from public datasets. Thanks to their authors.
+
+| Used for | Source |
+|---|---|
+| Training framework, model architecture, feature frontend | [microWakeWord](https://github.com/kahrendt/microWakeWord) (Kevin Ahrendt), Apache-2.0 |
+| Synthetic "Seneca" positives and sound-alike negatives | [piper-sample-generator](https://github.com/rhasspy/piper-sample-generator) (MIT) with [Piper](https://github.com/rhasspy/piper) voices: VCTK, L2-ARCTIC, CMU ARCTIC, ARU, SEMAINE, Alba, northern/southern English, Kusal, Reza Ibrahim (and, for the sound-alikes, German Thorsten and Kerstin voices) |
+| Precomputed negative features: speech, dinner party, no-speech (training) and the ambient test/validation sets | microWakeWord's published negative datasets, built from sources including [DiPCo](https://arxiv.org/abs/1909.13447) (dinner-party corpus) and [CHiME-6](https://chimechallenge.github.io/chime6/) |
+| Room reverb augmentation | [MIT environmental impulse responses](https://huggingface.co/datasets/davidscripka/MIT_environmental_impulse_responses) |
+| Background-noise augmentation | [AudioSet](https://research.google.com/audioset/) (balanced train subset), [FMA](https://github.com/mdeff/fma) (extra-small music subset) |
+
+These datasets and voices have their own licenses, and some are for non-commercial or research use
+only. The trained model (`seneca.tflite`) is shared for personal, non-commercial use. Check the
+individual licenses before using it, or retraining it, for anything else.

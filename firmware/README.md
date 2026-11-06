@@ -149,7 +149,7 @@ Main options (menuconfig → GPT Live Speaker):
 | `GLS_MIC_SLOT` | 0 | XVF3800 output slot used as mic |
 | `GLS_DEFAULT_VOLUME` | 80 | digital volume |
 | `GLS_IDLE_CLOSE_S` | 300 | FSM idle close |
-| `GLS_LANGUAGE`, `GLS_VOICE`, `GLS_TIMEZONE`, `GLS_TZ_POSIX` | de-DE, juniper, Europe/Berlin | session JSON |
+| `GLS_LANGUAGE`, `GLS_VOICE`, `GLS_TIMEZONE`, `GLS_TZ_POSIX` | en-US, juniper, America/New_York | session JSON (set your own language and IANA/POSIX time zone) |
 
 ## Bring-up checklist (first boot on new hardware)
 

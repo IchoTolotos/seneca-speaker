@@ -95,7 +95,7 @@ menu "GPT Live Speaker"
 
         config GLS_ACCEPT_LANGUAGE
             string "Accept-Language"
-            default "de-DE,de;q=0.9,en;q=0.8"
+            default "en-US,en;q=0.9"
 
         config GLS_CLIENT_VERSION
             string "OAI-Client-Version"
@@ -113,7 +113,7 @@ menu "GPT Live Speaker"
 
         config GLS_LANGUAGE
             string "Session language_code (BCP 47, empty = null)"
-            default "de-DE"
+            default "en-US"
 
         config GLS_VOICE
             string "Voice"
@@ -121,11 +121,11 @@ menu "GPT Live Speaker"
 
         config GLS_TIMEZONE
             string "Session timezone (IANA name)"
-            default "Europe/Berlin"
+            default "America/New_York"
 
         config GLS_TZ_POSIX
             string "POSIX TZ rule for the same zone (used for timezone_offset_min)"
-            default "CET-1CEST,M3.5.0,M10.5.0/3"
+            default "EST5EDT,M3.2.0,M11.1.0"
 
         config GLS_SESSION_OVERRIDES
             string "Session JSON overrides (JSON object, merged on top; empty = none)"
